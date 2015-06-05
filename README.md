@@ -1,10 +1,7 @@
 blesimrank
 =============================
 
-a sample of use argcv.
-
-usage :
-
+## Build
 ````
 $ git clone git@github.com:yuikns/blesimrank.git
 $ cd blesimrank
@@ -13,8 +10,12 @@ $ mkdir build
 $ cd build
 $ cmake ..
 $ make -j8
-$ ./run.sh
 ````
 
+## Run
+````
+$ ln -sf ../data .
+$ ./run.sh
+````
 
 
