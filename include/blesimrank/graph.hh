@@ -28,6 +28,7 @@ class GNode {
 public:
     GNode() {
         weight = 0.0;
+        gamma = 0.0;
     }
     //std::map<size_t, GEdge> edges;
     std::vector<GEdge> edges;

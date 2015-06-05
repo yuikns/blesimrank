@@ -14,10 +14,13 @@
 
 #include "argcv/random/random.hh"
 #include "argcv/type/heapq.hh"
+#include "argcv/timer/timer.hh"
 
 using namespace argcv::random;
 
 using argcv::type::heapq;
+
+using argcv::timer::timer;
 
 class Blesimrank {
 public:
@@ -99,8 +102,8 @@ public:
             if (_node->edges.size() > 0) {
                 _node->edges[0].accum_weight = _node->edges[0].accum_weight / sum_weight;
                 for (int j = 1; j < _node->edges.size(); j++) {
-                    _node->edges[i].accum_weight = _node->edges[i - 1].accum_weight
-                                                   + _node->edges[i].accum_weight / sum_weight;
+                    _node->edges[j].accum_weight = _node->edges[j - 1].accum_weight
+                                                   + _node->edges[j].accum_weight / sum_weight;
                 }
             }
         }
@@ -112,14 +115,26 @@ public:
         int ct = 0;
         GNode *_node = _g->get_node(c_node);
         for (ct = 0; ct < _t; ct++) {
-            std::vector<GEdge> &e = _node->edges;
             if (_node->edges.size() > 0) {
                 double r = random_double();
-                int j;
+                // printf("r: %f\n",r);fflush(NULL);
+                // printf("all w : %f \n",_node->weight);fflush(NULL);
+                int j = 0;
+                /*
                 for (j = 0; j < _node->edges.size(); j++) {
-                    if (e[j].accum_weight > r) break;
+                    printf("[GET] j: %d w: %f\n", j,_node->edges[j].accum_weight);fflush(NULL);
+                }*/
+                for (j = 0; j < _node->edges.size(); j++) {
+                    // printf("check..."); fflush(NULL);
+                    // printf("j: %d w: %f\n", j,_node->edges[j].accum_weight);
+                    // fflush(NULL);
+                    if (_node->edges[j].accum_weight > r) {
+                        // printf("break .. %d id: %zu \n", j, _node->edges[j].id);
+                        // fflush(NULL);
+                        break;
+                    }
                 }
-                c_node = e[j].id;
+                c_node = _node->edges[j].id;
                 path.push_back(c_node);
                 _node = _g->get_node(c_node);
             } else {
@@ -163,9 +178,8 @@ public:
     void cal_gamma_bound() {
         for (int v = 0; v < _g1->nsize(); v++) {
             GNode *_node = _g1->get_node(v);
-            std::vector<GEdge> &e = _node->edges;
             _node->gamma = 0;
-            if (e.size() > 0) {
+            if (_node->edges.size() > 0) {
                 std::vector<std::vector<size_t>> paths;
                 for (int r = 0; r < _r1; r++) {
                     paths.push_back(randomWalk(_g1, v));
@@ -190,15 +204,24 @@ public:
                     }
                 }
             }
+            // printf("ngamma : %d , %f \n",v,_node->gamma);
         }
     }
 
     void cal_beta_bound() { fprintf(stderr, "NOT USED\n"); }
 
     void preproc() {
+        timer t;
+        t.label("0");
         trans_pros();
+        t.label("1");
+        printf("[preproc] 1/3 %f ms \n",t.between("1","0"));fflush(NULL);
         gen_bipartitle_graph();
+        t.label("2");
+        printf("[preproc] 2/3 %f ms \n",t.between("2","1"));fflush(NULL);
         cal_gamma_bound();
+        t.label("3");
+        printf("[preproc] 3/3 %f ms \n",t.between("3","2"));fflush(NULL);
     }
 
     double simrank(int v, int u, int _r) {
@@ -222,8 +245,8 @@ public:
             }
             for (std::map<size_t, size_t>::const_iterator it = hitter_v.begin(); it != hitter_v.end(); it++) {
                 size_t alpha = it->second;
-                std::map<size_t, size_t>::const_iterator it_u = hitter_v.find(it->first);
-                if (it_u != hitter_v.end()) {
+                std::map<size_t, size_t>::const_iterator it_u = hitter_u.find(it->first);
+                if (it_u != hitter_u.end()) {
                     size_t beta = it_u->second;
                     eta += pow(_c, t) * (1 - _c) * alpha * beta / (_r * _r);
                 }
@@ -233,9 +256,7 @@ public:
     }
 
     static int pair_compare_by_value(std::pair<size_t, double> a, std::pair<size_t, double> b) {
-        return a.second > b.second ? 1 :
-                                   //(a.second == b.second ? (int_compare(a.first,b.first)) : -1);
-                   (a.second == b.second ? 0 : -1);
+        return a.second > b.second ? 1 : (a.second == b.second ? 0 : -1);
     }
 
     template <typename T>
@@ -270,7 +291,7 @@ public:
                 if (_g1->get_node(*it)->gamma >= _theta) {
                     int id = *it;
                     double score = simrank(v, id, 100);
-                    hq.push(std::make_pair(id, score));
+                    if (score > _theta) hq.push(std::make_pair(id, score));
                 }
             }
             std::pair<size_t, double> tval;
@@ -284,19 +305,29 @@ public:
 
     void save() {
         mkdir("result", 0755);
+        timer t;
+        t.label("c");
         FILE *fp = fopen(output_filename.c_str(), "w");
+        if (fp == NULL) {
+            fprintf(stderr, "result file %s open failed ... \n", output_filename.c_str());
+            return;
+        }
+        printf("opened result file \n");
+        fflush(NULL);
+        t.label("l");
         for (int i = 0; i < _g1->nsize(); i++) {
             std::vector<std::pair<size_t, double>> r = query(i);
             for (std::vector<std::pair<size_t, double>>::const_iterator it = r.begin(); it != r.end(); it++) {
-                fprintf(fp,"%zu:%f\t",it->first,it->second);
+                fprintf(fp, "%zu:%f\t", it->first, it->second);
             }
-            fprintf(fp,"\n");
-            if(i % 100 == 0 ) {
-                printf("saving : %d \n",i);
+            fprintf(fp, "\n");
+            if (i % 100 == 0) {
+                printf("saving : %d time cost : %f ms\n", i,t.from("l"));fflush(NULL);
+                t.label("l");
             }
         }
         fclose(fp);
-        printf("[save] all done\n");
+        printf("[save] all done time cost : %f ms\n",t.from("c"));fflush(NULL);
     }
 
     const int T() { return _t; }
