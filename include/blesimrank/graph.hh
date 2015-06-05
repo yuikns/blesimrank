@@ -40,30 +40,20 @@ public:
     double gamma;
 };
 
-class GPath {
-public:
-    std::vector<size_t> node_v;
-    // ConcurrentQueue<int> node_cq;
-    // std::queue<int> node_q;
-    // std::set<int> node_s;
-};
 
 class BGrapgh {
 public:
-    BGrapgh(BGrapgh *_g) : BGrapgh(_g->nsize(), _g->psize()) {
+    BGrapgh(BGrapgh *_g) : BGrapgh(_g->nsize()) {
         //Do I Need Copy The Edges? 
         //memcpy(_nodes, _g->_nodes, sizeof(GNode) * node_size);
     }
 
-    BGrapgh(size_t node_size, size_t path_size)
+    BGrapgh(size_t node_size)
         : node_size(node_size),
-          path_size(path_size),
-          _nodes(new GNode[node_size]),
-          _paths(new GPath[path_size]) {}
+          _nodes(new GNode[node_size]) {}
 
     ~BGrapgh() {
         delete[] _nodes;
-        delete[] _paths;
     }
 
     GNode *get_node(size_t offset) {
@@ -74,16 +64,7 @@ public:
         }
     }
 
-    GPath *get_path(size_t offset) {
-        if (offset >= path_size) {
-            return NULL;
-        } else {
-            return &(_paths[offset]);
-        }
-    }
-
     size_t nsize() const { return node_size; }
-    size_t psize() const { return path_size; }
 
     size_t esize() const {
         size_t edge_size = 0;
@@ -101,9 +82,7 @@ public:
 
 private:
     size_t node_size;
-    size_t path_size;
     GNode *_nodes;
-    GPath *_paths;
 };
 
 #endif  // BLESIMRANK_GRAPH_HH

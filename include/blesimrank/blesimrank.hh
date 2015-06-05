@@ -53,7 +53,7 @@ public:
         read_ds_size(line, _n, _m);
         printf("[Blesimrank] init ... N: %d, M: %d, R1=%d, R2=%d\n", N(), M(), R1(), R2());
         fflush(NULL);
-        _g1 = new BGrapgh(N(), R1());
+        _g1 = new BGrapgh(N());
         printf("[Blesimrank] G1 inited\n");
         fflush(NULL);
 
