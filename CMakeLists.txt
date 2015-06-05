@@ -1,4 +1,4 @@
-PROJECT(argcv_seed)
+PROJECT(blesimrank)
 # REQUIRE
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
 
