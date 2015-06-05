@@ -215,13 +215,16 @@ public:
         t.label("0");
         trans_pros();
         t.label("1");
-        printf("[preproc] 1/3 %f ms \n",t.between("1","0"));fflush(NULL);
+        printf("[preproc] 1/3 %f ms \n", t.between("1", "0"));
+        fflush(NULL);
         gen_bipartitle_graph();
         t.label("2");
-        printf("[preproc] 2/3 %f ms \n",t.between("2","1"));fflush(NULL);
+        printf("[preproc] 2/3 %f ms \n", t.between("2", "1"));
+        fflush(NULL);
         cal_gamma_bound();
         t.label("3");
-        printf("[preproc] 3/3 %f ms \n",t.between("3","2"));fflush(NULL);
+        printf("[preproc] 3/3 %f ms \n", t.between("3", "2"));
+        fflush(NULL);
     }
 
     double simrank(int v, int u, int _r) {
@@ -322,12 +325,14 @@ public:
             }
             fprintf(fp, "\n");
             if (i % 100 == 0) {
-                printf("saving : %d time cost : %f ms\n", i,t.from("l"));fflush(NULL);
+                printf("saving : %d time cost : %f ms\n", i, t.from("l"));
+                fflush(NULL);
                 t.label("l");
             }
         }
         fclose(fp);
-        printf("[save] all done time cost : %f ms\n",t.from("c"));fflush(NULL);
+        printf("[save] all done time cost : %f ms\n", t.from("c"));
+        fflush(NULL);
     }
 
     const int T() { return _t; }
